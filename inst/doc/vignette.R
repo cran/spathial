@@ -4,6 +4,11 @@ knitr::opts_chunk$set(fig.width=7, fig.height=5)
 ## ----eval=FALSE---------------------------------------------------------------
 #  install.packages("spathial")
 
+## ----eval=FALSE---------------------------------------------------------------
+#  install.packages("devtools")
+#  library(devtools)
+#  devtools::install_github("erikagardini/spathial", build_vignettes=TRUE)
+
 ## -----------------------------------------------------------------------------
 library("spathial")
 
@@ -27,7 +32,7 @@ head(X)
 ## -----------------------------------------------------------------------------
 head(X_labels)
 
-## ----fig.cap="_Quick Start example dataset_"----------------------------------
+## ----fig.cap="__Quick Start example dataset 2D.__ Each point is a sample of the dataset, colored according to its labels."----
 # Plot the results
 colors <- rainbow(length(table(as.numeric(as.factor(X_labels)))))
 colors_labels <- sapply(as.numeric(as.factor(X_labels)), function(x){colors[x]})
@@ -60,7 +65,7 @@ boundary_ids<-boundary_init$boundary_ids
 X<-boundary_init$X
 X_labels<-boundary_init$X_labels
 
-## ----fig.cap="_Quick Start example - boundaries_"-----------------------------
+## ----fig.cap="__Quick Start example - boundaries.__ Each point is a sample of the 2D dataset, colored according to its labels. Boundaries are respectively the centroid of the samples labelled as *3* (start point) and the centroid of the samples labelled as *6* (end point)."----
 #Plot the results
 boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 oldpar <- par(no.readonly = TRUE)
@@ -83,7 +88,7 @@ boundary_ids <- filter_res$boundary_ids
 boundaries <- X[which(rownames(X) == boundary_ids[1] | rownames(X) == boundary_ids[2]),]
 X_garbage <- X[!mask,]
 
-## ----fig.height=10, fig.cap="_Quick Start example - prefiltering_"------------
+## ----fig.height=10, fig.cap="__Quick Start example - prefiltering.__ Each point is a sample of the 2D dataset, colored according to its labels. Boundaries are respectively the centroid of the samples labelled as *3* (start point) and the centroid of the samples labelled as *6* (end point). Prefiltered samples are marked in gray."----
 oldpar <- par(no.readonly = TRUE)
 par(mfrow=c(2,1))
 par(mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
@@ -116,41 +121,42 @@ X_labels_filtered <- X_labels[mask]
 NC <- 50
 spathial_res_with_filtering <- spathial::spathialWay(X_filtered, boundary_ids, NC)
 
-## ----fig.cap='_Output of the spathialPlot() function._'-----------------------
+## ----fig.cap='__Output of the spathialPlot() function.__ Each point is a sample of the 2D dataset, colored according to its labels. Boundaries are respectively the centroid of the samples labelled as *3* (start point) and the centroid of the samples labelled as *6* (end point). The Principal Path is marked in blue. It moves from the start point to the end point passing through each waypoint (marked with "*"). Filtered samples are marked in grey.'----
 # Plot principal path with prefiltering - provide a mask
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_with_filtering,
                        perplexity_value=30, mask=mask,
                        title="Principal path with prefiltering"
 )
-
-## ---- cap='_Output of the spathialPlot() function. Filtered samples are marked in grey._'----
 # Plot principal path without prefiltering - mask NULL
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res_without_filtering,
                        perplexity_value=30,                       
                        title="Principal path without prefiltering"
 )
 
-## ----fig.cap='_Quick Start example - path labels across path steps_'----------
-### Matrix X not filtered
+## ----fig.height=10, fig.cap='__Quick Start example - path labels across path steps.__ For each waypoint of the Principal Path (computed from the centroid of the samples labelled as *3* (start point) to the centroid of the samples labelled as *6* (end point), the assigned label is the label of the nearest sample.'----
+oldpar <- par(no.readonly = TRUE)
+par(mfrow=c(2,1))
+# Matrix X not filtered
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_with_filtering)
+# Matrix X filtered
+ppath_labels_filtered <- spathial::spathialLabels(X, X_labels, spathial_res_without_filtering)
+
 # Plot the results
 ppath_labels_numerical = as.numeric(as.factor(ppath_labels))
-
 colors_labels_ppath <- sapply(ppath_labels_numerical, function(y){colors[as.integer(y)]})
 plot(c(1:length(ppath_labels_numerical)), c(ppath_labels_numerical), col=colors_labels_ppath,
      pch=as.character(ppath_labels_numerical), xlab="Path Step", ylab="Sample Label",
      main="Path progression with prefiltering"
 )
 
-### Matrix X filtered
-ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res_without_filtering)
 # Plot the results
-ppath_labels_numerical = as.numeric(as.factor(ppath_labels))
-colors_labels_ppath <- sapply(ppath_labels_numerical, function(y){colors[as.integer(y)]})
-plot(c(1:length(ppath_labels_numerical)), c(ppath_labels_numerical), col=colors_labels_ppath,
-     pch=as.character(ppath_labels_numerical), xlab="Path Step", ylab="Sample Label",
+ppath_labels_filtered_numerical = as.numeric(as.factor(ppath_labels_filtered))
+colors_labels_ppath <- sapply(ppath_labels_filtered_numerical, function(y){colors[as.integer(y)]})
+plot(c(1:length(ppath_labels_filtered_numerical)), c(ppath_labels_filtered_numerical), col=colors_labels_ppath,
+     pch=as.character(ppath_labels_filtered_numerical), xlab="Path Step", ylab="Sample Label",
      main="Path progression without prefiltering"
 )
+par(oldpar)
 
 ## ----message="hide"-----------------------------------------------------------
 # Calculate Association Statistics for each feature in the path
@@ -177,7 +183,7 @@ X_labels <- data[,"Category"]
 X[1:4,1:5]
 
 ## ----results="hide"-----------------------------------------------------------
-# Choose the starting and the ending points
+# Choose the starting and ending points
 boundary_init <- spathial::spathialBoundaryIds(X, X_labels, mode=2, from=2, to=1)
 # Alternative, mode 3: 
 # from="TCGA-DD-A39W-11A-11R-A213-07", to="TCGA-G3-AAV2-01A-11R-A37K-07"
@@ -189,13 +195,11 @@ X_labels <- boundary_init$X_labels
 NC <- 50
 spathial_res <- spathial::spathialWay(X, boundary_ids, NC)
 
-## ----fig.cap="_Principal Path across the TCGA Liver Cancer dataset_"----------
+## ----fig.cap="__Principal Path across the TCGA Liver Cancer dataset.__ 2D visualization of the Principal Path together with the data points. The x and y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start point and the end point of the Principal Path are the centroid of the normal samples and the centroid of the tumor samples, respectively. The Principal Path comprises 50 intermediate points (waypoints) plus the boundaries."----
 # Plot the path in 2D using Rtsne
-spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res,
-                       perplexity_value=30)
+spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value=30)
 
-
-## ----fig.cap='_Liver Cancer example - path labels across path steps_'---------
+## ----fig.cap='__Liver Cancer example - path labels across path steps.__ For each waypoint of the Principal Path (computed from the centroid of the normal samples to the centroid of the tumor samples), the assigned label is the label of the nearest sample.'----
 # Labels for each waypoint with knn
 ppath_labels <- spathial::spathialLabels(X, X_labels, spathial_res)
 # Plot the results
@@ -252,7 +256,7 @@ boundary_ids<-boundaries$boundary_ids
 X <- boundaries$X
 X_labels <- boundaries$X_labels
 
-## -----------------------------------------------------------------------------
+## ----fig.cap="__Principal Path across the TCGA Luad Cancer dataset.__ 2D visualization of the Principal Path together with the data points. The x and y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start and end points of the Principal Path are the most distant points from the centroid of the tumor samples and the centroid of the normal samples, respectively. The Principal Path comprises 50 intermediate points (waypoints) plus the boundaries."----
 load(url("https://github.com/erikagardini/spathial_dataframes/raw/master/spathial_res.rda"))
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 
@@ -282,7 +286,7 @@ X_labels <- boundaries$X_labels
 ## ----results='hide'-----------------------------------------------------------
 spathial_res <- spathial::spathialWay(X, boundary_ids, NC = 50)
 
-## -----------------------------------------------------------------------------
+## ----fig.cap="__Principal Path across the Karlsson Single-cell RNA-Seq dataset__ 2D visualization of the Principal Path together with the data points. The x and the y coordinates are the output of the dimensionality reduction performed with tSNE [2]. The start end points of the Principal Path are the centroid of the samples labelled as *G1* and the centroid of the samples labelled as *G2/M*, respectively. The Principal Path comprises 50 intermediate points (waypoints) plus the boundaries."----
 spathial::spathialPlot(X, X_labels, boundary_ids, spathial_res, perplexity_value = 30, mask = NULL)
 
 ## -----------------------------------------------------------------------------
